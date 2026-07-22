@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Attendance - GeoFence Attendance System</title>
+
+  <!-- Google Fonts & Font Awesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Leaflet Maps CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- App Custom Styles -->
+  <link rel="stylesheet" href="css/styles.css?v=2.1">
+</head>
+<body>
+
+  <div id="app">
+    <!-- Navigation Header (Navy Blue & Gold Accent) -->
+    <header class="app-header" id="app-header" style="display: none;">
+      <!-- Toggle Mobile Sidebar Button -->
+      <button class="mobile-menu-btn" id="mobile-menu-btn" onclick="app.toggleMobileSidebar()" aria-label="Toggle Menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <a href="javascript:void(0)" class="brand-logo" id="brand-logo-btn">
+        <div class="logo-icon"><i class="fa-solid fa-location-dot"></i></div>
+        <span class="d-none-xs">Smart<span class="text-yellow">Attendance</span></span>
+      </a>
+
+      <!-- Quick Role Switcher for Demo -->
+      <div class="demo-role-switcher">
+        <button class="demo-btn active" id="demo-btn-mhs" onclick="app.switchRole('mahasiswa')">
+          <i class="fa-solid fa-user-graduate"></i> Mhs
+        </button>
+        <button class="demo-btn" id="demo-btn-admin" onclick="app.switchRole('admin')">
+          <i class="fa-solid fa-user-shield"></i> Admin
+        </button>
+      </div>
+
+      <div class="user-nav-profile">
+        <span class="role-badge mahasiswa d-none-mobile" id="header-role-badge">Mahasiswa</span>
+        <div class="text-end d-none-mobile">
+          <div id="header-user-name" class="fw-bold text-navy" style="font-size: 0.85rem;">Mahasiswa</div>
+          <div id="header-user-sub" class="text-subtle" style="font-size: 0.725rem;">NIM: 230101001</div>
+        </div>
+        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150" alt="Profile" class="avatar" id="header-avatar">
+        <button class="header-logout-btn" onclick="app.logout()" title="Logout">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Mobile Sidebar Backdrop Overlay -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="app.toggleMobileSidebar(false)"></div>
+
+    <!-- Main App Wrapper (Sidebar + Main Content View) -->
+    <div class="main-wrapper" id="main-wrapper" style="display: none;">
+      
+      <!-- Desktop Sidebar Navigation -->
+      <aside class="sidebar">
+        <div>
+          <div class="text-subtle text-uppercase mb-3" style="font-size: 0.725rem; font-weight: 800; letter-spacing: 0.08em; padding: 0 0.5rem;">
+            Main Menu
+          </div>
+          <ul class="nav-menu" id="sidebar-nav">
+            <!-- Dynamic Nav links populated by app.js -->
+          </ul>
+        </div>
+
+        <!-- Campus Geofence Status Widget Sidebar -->
+        <div class="glass-panel p-3 text-center" style="font-size: 0.825rem; background: var(--blue-soft); border-color: var(--border-active);">
+          <div class="text-navy mb-1 fw-bold"><i class="fa-solid fa-building-columns text-primary"></i> Target Kampus</div>
+          <div id="sidebar-campus-name" class="fw-bold text-main">Gedung Utama USM</div>
+          <div id="sidebar-radius-info" class="badge badge-hadir mt-2" style="background: var(--yellow-light); color: var(--navy-dark);">Radius: 150m</div>
+        </div>
+      </aside>
+
+      <!-- Main Content View Area -->
+      <main class="content-container">
+        <!-- Views will be dynamically swapped here -->
+        <div id="view-root"></div>
+      </main>
+
+    </div>
+
+    <!-- Login View Screen -->
+    <div id="login-view" class="login-screen">
+      <div class="glass-panel login-card">
+        <div class="text-center mb-4">
+          <div class="logo-icon mx-auto mb-3" style="width: 54px; height: 54px; font-size: 1.5rem; border-radius: var(--radius-lg); background: var(--navy-dark); color: var(--yellow-light); display: inline-flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md);">
+            <i class="fa-solid fa-location-dot"></i>
+          </div>
+          <h2 class="fw-bold text-navy" style="font-size: 1.5rem;">Smart Attendance</h2>
+          <p class="text-muted" style="font-size: 0.875rem;">Sistem Absensi Mahasiswa GeoFence GPS</p>
+        </div>
+
+        <!-- Quick Preset Login Selector -->
+        <div class="glass-panel p-2 mb-4 d-flex justify-content-between text-center" style="gap: 0.5rem; background: var(--bg-surface-alt);">
+          <button class="btn btn-secondary w-100 py-2" onclick="app.fillQuickLogin('mahasiswa')" style="font-size: 0.825rem;">
+            <i class="fa-solid fa-user-graduate text-primary"></i> Demo Mhs
+          </button>
+          <button class="btn btn-primary w-100 py-2" onclick="app.fillQuickLogin('admin')" style="font-size: 0.825rem;">
+            <i class="fa-solid fa-user-shield"></i> Demo Admin
+          </button>
+        </div>
+
+        <form id="login-form">
+          <div class="form-group">
+            <label class="form-label" id="login-id-label">NIM / Username</label>
+            <input type="text" id="login-id" class="form-control" placeholder="Masukkan NIM atau username" required value="230101001">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="login-password" class="form-control" placeholder="••••••••" required value="123456">
+          </div>
+          <button type="submit" class="btn btn-primary w-100 btn-lg mt-3">
+            <i class="fa-solid fa-right-to-bracket"></i> Masuk Ke Aplikasi
+          </button>
+        </form>
+
+        <div class="text-center mt-4 text-subtle" style="font-size: 0.775rem;">
+          GeoFence Protection & Virtual Verification Engine v2.0
+        </div>
+      </div>
+    </div>
+
+    <!-- Generic Modal Backdrop Container -->
+    <div class="modal-backdrop" id="app-modal">
+      <div class="glass-panel modal-content" id="modal-body-content">
+        <!-- Content injected dynamically -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- External Libraries -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Application Modules -->
+  <script src="js/store.js?v=2.1"></script>
+  <script src="js/geofence.js?v=2.1"></script>
+  <script src="js/map.js?v=2.1"></script>
+  <script src="js/camera.js?v=2.1"></script>
+  <script src="js/qrcode.js?v=2.1"></script>
+  <script src="js/charts.js?v=2.1"></script>
+  <script src="js/app.js?v=2.1"></script>
+
+</body>
+</html>
